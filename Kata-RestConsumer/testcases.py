@@ -3,6 +3,7 @@ __author__ = 'Javier'
 import unittest
 from gindex import GIndex, Project, ProjectRepositoryService
 from gindex_presenter import GIndexPresenter
+from gindex_conectors import GithubConnector
 from unittest.mock import MagicMock
 import httpretty
 
@@ -33,7 +34,7 @@ class TestGIndex(unittest.TestCase):
         self.assertEqual(result, 3)
 
     def test_when_project_has_forks_stars_and_watsh_use_them(self):
-        result = self.gindex.calculate(self.create_project(forks=1, stars=1, watchs=1 ))
+        result = self.gindex.calculate(self.create_project(forks=1, stars=1, watchs=1))
         self.assertEqual(result, 5)
 
 
@@ -54,37 +55,44 @@ class TestGIndexPresenter(unittest.TestCase):
 class TestProjectRepositoryService(unittest.TestCase):
 
     def setUp(self):
-       self.repo = ProjectRepositoryService()
-
-    def mock_read(self, unused01, unused02):
-        return {'forks_count':'2', 'watchers_count':'3', 'stargazers_count':'3'}
+        mock_github_conector = MagicMock()
+        mock_github_conector.read_all = MagicMock(return_value=[{"name": "scikit-aero",
+                                                                 'forks_count': '2',
+                                                                 'watchers_count': '3',
+                                                                 'stargazers_count': '3'}])
+        self.repo = ProjectRepositoryService(mock_github_conector)
 
     def test_when_requesting_sckiti_aero_return_project_(self):
-        self.repo._read_repo = self.mock_read
         project = self.repo.find("Pybonacci", "scikit-aero")
         self.assertEquals(project.forks, 2)
         self.assertEquals(project.stars, 3)
         self.assertEquals(project.watchs, 3)
 
-    @httpretty.activate
-    def test__read_report(self):
-        httpretty.register_uri(httpretty.GET, "https://api.github.com/users/Pybonacci/repos",
-                           body='[{"name": "scikit-aero"}]',
-                           content_type="application/json")
-        json_project = self.repo._read_repo("Pybonacci", "scikit-aero")
-        self.assertEqual(json_project['name'], "scikit-aero")
-
-    def test__create_github_url(self):
-        url = self.repo._create_github_url("Pybonacci")
-        self.assertEqual(url, "https://api.github.com/users/Pybonacci/repos")
-
     def test__build_project(self):
-        josn_project={'forks_count':'2', 'watchers_count':'3', 'stargazers_count':'3'}
+        josn_project={'forks_count': '2', 'watchers_count': '3', 'stargazers_count': '3'}
         project = self.repo._build_project(josn_project)
         self.assertEquals(project.forks, 2)
         self.assertEquals(project.stars, 3)
         self.assertEquals(project.watchs, 3)
 
+
+class TestGithubConnector(unittest.TestCase):
+
+    def setUp(self):
+        self.conector = GithubConnector()
+
+    @httpretty.activate
+    def test__read_report(self):
+        result = '[{"name": "scikit-aero"}]'
+        httpretty.register_uri(httpretty.GET, "https://api.github.com/users/Pybonacci/repos",
+                               body=result,
+                               content_type="application/json")
+        json_project = self.conector.read_all("Pybonacci")
+        self.assertEqual(json_project, [{"name": "scikit-aero"}])
+
+    def test__create_github_url(self):
+        url = self.conector._create_github_url("Pybonacci")
+        self.assertEqual(url, "https://api.github.com/users/Pybonacci/repos")
 
 if __name__ == '__main__':
     unittest.main()

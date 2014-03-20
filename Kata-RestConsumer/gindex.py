@@ -1,8 +1,5 @@
 __author__ = 'Javier'
 
-import urllib.request
-import json
-
 
 class Project(object):
 
@@ -32,21 +29,18 @@ class GIndex(object):
 
 class ProjectRepositoryService(object):
 
+    def __init__(self, conector):
+        self.conector = conector
+
     def find(self, user, repo_name):
         return self._build_project(self._read_repo(user, repo_name))
 
     def _read_repo(self, user, repo_name):
-        url = self._create_github_url(user)
-        page = urllib.request.urlopen(url)
-        json_as_text = page.read().decode('utf-8')
-        repos = json.loads(json_as_text)
+        repos = self.conector.read_all(user)
         for repo in repos:
-            if repo['name']  == repo_name:
+            if repo['name'] == repo_name:
                 return repo
         return None
-
-    def _create_github_url(self, user):
-        return "https://api.github.com/users/"+user+"/repos"
 
     def _build_project(self, json_project):
         return Project(json_project['forks_count'],

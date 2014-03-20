@@ -1,10 +1,12 @@
 __author__ = 'Javier'
 
 from gindex import GIndex, ProjectRepositoryService
+from gindex_conectors import GithubConnector
+
 
 class GIndexPresenter(object):
 
-    def __init__(self, view, repo_service = ProjectRepositoryService()):
+    def __init__(self, view, repo_service=ProjectRepositoryService(GithubConnector())):
         self.view = view
         self.gindex_calc = GIndex()
         self.repo_service = repo_service

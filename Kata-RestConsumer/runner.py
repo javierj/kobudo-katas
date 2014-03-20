@@ -3,6 +3,7 @@ __author__ = 'Javier'
 
 from gindex_presenter import GIndexPresenter
 
+
 class ConsoleView(object):
 
     def show_gindex(self, gindex):
