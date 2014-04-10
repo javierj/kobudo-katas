@@ -1,7 +1,7 @@
 __author__ = 'Javier'
 
 import unittest
-from gindex import GIndex, Project, ProjectRepositoryService
+from gindex import GIndex, Project, ProjectRepositoryService, ProjectFactory
 from gindex_presenter import GIndexPresenter
 from gindex_conectors import GithubConnector
 from unittest.mock import MagicMock
@@ -68,9 +68,13 @@ class TestProjectRepositoryService(unittest.TestCase):
         self.assertEquals(project.stars, 3)
         self.assertEquals(project.watchs, 3)
 
-    def test__build_project(self):
+
+class TestProjectFactory(unittest.TestCase):
+
+    def test_build_project(self):
         josn_project={'forks_count': '2', 'watchers_count': '3', 'stargazers_count': '3'}
-        project = self.repo._build_project(josn_project)
+        factory = ProjectFactory()
+        project = factory.build_from(josn_project)
         self.assertEquals(project.forks, 2)
         self.assertEquals(project.stars, 3)
         self.assertEquals(project.watchs, 3)

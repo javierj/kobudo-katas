@@ -31,9 +31,11 @@ class ProjectRepositoryService(object):
 
     def __init__(self, conector):
         self.conector = conector
+        self.project_factory = ProjectFactory()
 
     def find(self, user, repo_name):
-        return self._build_project(self._read_repo(user, repo_name))
+        raw_json = self._read_repo(user, repo_name)
+        return self.project_factory.build_from(raw_json)
 
     def _read_repo(self, user, repo_name):
         repos = self.conector.read_all(user)
@@ -42,7 +44,10 @@ class ProjectRepositoryService(object):
                 return repo
         return None
 
-    def _build_project(self, json_project):
+
+class ProjectFactory(object):
+
+    def build_from(self, json_project):
         return Project(json_project['forks_count'],
                        json_project['watchers_count'],
                         json_project['stargazers_count'])
