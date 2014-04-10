@@ -1,18 +1,15 @@
 from django.shortcuts import render
-from django.http import HttpResponseRedirect
-from gindex.gindex_logic.gindex import ProjectRepositoryService
-from gindex.gindex_logic.gindex import GIndex
-from gindex.gindex_logic.gindex_conectors import GithubConnector
+from gindex.gindex_logic.gindex import GIndexCalculator, RepositoryService
 from gindex.forms import RepositoryRequestForm
 
 
 # Create your views here.
 
 def gindex_for(user, repo):
-    service = ProjectRepositoryService(GithubConnector())
-    project = service.find(user, repo)
-    gindex_calc = GIndex()
-    gindex = gindex_calc.calculate(project)
+    service = RepositoryService()
+    project = service.get_repo(user, repo)
+    gindex_calc = GIndexCalculator()
+    gindex = gindex_calc.calc(project)
     return gindex
 
 

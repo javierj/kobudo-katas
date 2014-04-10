@@ -1,53 +1,61 @@
 __author__ = 'Javier'
 
+import urllib.request
+import json
 
-class Project(object):
-
-    def __init__(self, forks, stars, watchs):
-        self._forks = int(forks)
+class Repo(object):
+    def __init__(self, fork, stars, watchers):
+        self._fork = int(fork)
         self._stars = int(stars)
-        self._watchs = int(watchs)
+        self._watchers = int(watchers)
 
     @property
     def forks(self):
-        return self._forks
+        return self._fork
 
     @property
     def stars(self):
         return self._stars
 
     @property
-    def watchs(self):
-        return self._watchs
+    def watchers(self):
+        return self._watchers
 
 
-class GIndex(object):
+class GIndexCalculator(object):
+    def calc(self, repo_info):
+        return (repo_info.forks *3) + repo_info.stars + repo_info.watchers
 
-    def calculate(self, project):
-        return project.forks * 3 + project.stars + project.watchs
 
+class RepositoryService(object):
+    def get_repos_from(self, user):
+        url = "https://api.github.com/users/"+user+"/repos"
+        connection = urllib.request.urlopen(url)
+        result_raw = connection.read().decode('utf-8')
+        repos = json.loads(result_raw)
+        return repos
 
-class ProjectRepositoryService(object):
-
-    def __init__(self, conector):
-        self.conector = conector
-        self.project_factory = ProjectFactory()
-
-    def find(self, user, repo_name):
-        raw_json = self._read_repo(user, repo_name)
-        return self.project_factory.build_from(raw_json)
-
-    def _read_repo(self, user, repo_name):
-        repos = self.conector.read_all(user)
+    def find_repo(self, repos, repo_name):
         for repo in repos:
             if repo['name'] == repo_name:
                 return repo
         return None
 
+    def get_repo(self, user, repo_name):
+        repos = self.get_repos_from(user)
+        repo = self.find_repo(repos, repo_name)
+        print(repo)
+        return Repo(repo['forks_count'], repo['stargazers_count'], repo['watchers_count'])
 
-class ProjectFactory(object):
 
-    def build_from(self, json_project):
-        return Project(json_project['forks_count'],
-                       json_project['watchers_count'],
-                        json_project['stargazers_count'])
+
+class GIndexPresenter(object):
+    def __init__(self, view, service):
+        self.view = view
+        self.service = service
+
+    def show_gindex(self, user, repo_name):
+        repo_info = self.service.get_repo(user, repo_name)
+        calculator = GIndexCalculator()
+        gindex = calculator.calc(repo_info)
+        self.view.show(gindex)
